@@ -1,0 +1,45 @@
+var urban = /* color: #d63000 */ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-98.16902101329015, 18.892783239584105],
+                  [-98.1698328473712, 18.891387598562474],
+                  [-98.16520080891439, 18.887529402898643],
+                  [-98.16417369233761, 18.889436968493555],
+                  [-98.1647128565154, 18.89041181292589]]]),
+            {
+              "class": 0,
+              "system:index": "0"
+            })]),
+    vegetation = /* color: #98ff00 */ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-98.18352343330344, 18.869252724687428],
+                  [-98.17906377271908, 18.871613745567537],
+                  [-98.18001041446837, 18.875669665304557]]]),
+            {
+              "class": 1,
+              "system:index": "0"
+            })]),
+    water = /* color: #0b4a8b */ee.FeatureCollection(
+        [ee.Feature(
+            ee.Geometry.Polygon(
+                [[[-98.17365694355715, 18.902470181778043],
+                  [-98.17846284894637, 18.890857715917228],
+                  [-98.17451474396461, 18.888827242558722]]]),
+            {
+              "class": 2,
+              "system:index": "0"
+            })]);
+
+// Create a mosaic of Landsat 8 images for the summer of 2015.
+var mosaic = ee.ImageCollection('LC8_L1T_TOA')
+  .filterDate('2015-06-01', '2015-09-30')
+  .median();
+Map.addLayer(mosaic, {bands: ["B4", "B3", "B2"], max:0.3})
+
+// Sample image and train a classifier.
+var training = mosaic.sampleRegions(urban.merge(vegetation).merge(water), ["class"], 30)
+var classifier = ee.Classifier.cart().train(training, "class")
+
+Map.addLayer(mosaic.classify(classifier), {min:0, max:2, palette: ["red", "green", "blue"]})
+

@@ -1,0 +1,16 @@
+// Create a median monthly composite for each month in the growing season
+// using the full stack of Landsat 8 data.
+
+// Set up an NDVI band for each image.
+var collection = ee.ImageCollection("LANDSAT/LC8_L1T_TOA")
+    .map(function(image) {
+      return image.addBands(image.normalizedDifference(["B5", "B4"]).rename("ndvi"))
+    })
+    
+// Create a median composite for each month in the growing season.
+var months = ee.List.sequence(3, 9)
+var composites = ee.ImageCollection(months.map(function(m) {
+  return collection.filter(ee.Filter.calendarRange(m, m, "month")).median()
+}))
+
+Map.addLayer(composites.select("ndvi"))
